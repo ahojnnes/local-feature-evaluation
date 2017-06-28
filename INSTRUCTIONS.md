@@ -14,14 +14,13 @@ whether the computed results make sense.
    - Computer with CUDA-enabled GPU
    - Matlab R2016b or newer (for GPU feature matching)
    - [VLFeat](http://www.vlfeat.org/) toolbox for Matlab
-   - [COLMAP](https://github.com/colmap/colmap) version 3.1:
+   - [COLMAP](https://github.com/colmap/colmap):
 
          git clone https://github.com/colmap/colmap
-         git checkout 3.1
-         cd colmap
-         mkdir build
-         cd build
-         cmake ..
+         cp path/to/local-feature-evaluation/* colmap/src/tools
+         mkdir colmap/build
+         cd colmap/build
+         cmake .. -DTEST_ENABLED=OFF
          make -j
 
 1. **Download the datasets:**
@@ -119,7 +118,26 @@ whether the computed results make sense.
        assert(size(keypoints, 1) == size(descriptors, 1));
        write_descriptors('Fountain/descriptors/0000.png.bin', descriptors);
 
-5. **Match the descriptors:**
+5. **Build the visual vocabulary:**
+
+   For matching the descriptors of the larger datasets, you need to build a
+   visual vocabulary for your descriptor. This is done using the Oxford5k
+   dataset. First, you must compute features for all images in the dataset
+   as described in the previous steps. Note that if you use your own keypoint
+   detector, every image should have around 1000 features on average in order
+   to obtain a good quantization of the descriptor space. You can then build
+   a visual vocabulary tree using the ``vocab_tree_builder_float`` binary:
+
+       ./colmap/build/src/tools/vocab_tree_builder_float \
+           --descriptor_path Oxford5k/descriptors \
+           --database_path Oxford5k/database.db \
+           --vocab_tree_path Oxford5k/vocab-tree.bin
+
+   Note that if your descriptors have a dimensionality different from 128, you
+   have to change the ``kDescDim`` values in the ``vocab_tree_builder_float.cc``
+   and ``vocab_tree_retriever_float.cc`` source files accordingly.
+
+6. **Match the descriptors:**
 
    As an input to image-based reconstruction, you need to compute 2D-to-2D
    feature correspondences between pairs of images. For the smaller datasets
@@ -139,7 +157,8 @@ whether the computed results make sense.
         16 hours to match on a single NVIDIA Titan X GPU. It is therefore
         recommended to check whether everything works on one of the smaller
         datasets before running the bigger datasets.
-     2. Nearest neighbor matching: TODO
+     2. Nearest neighbor matching:
+
 
    In both cases, the output will be written to the ``matches`` folder inside
    the dataset folder. The matches for image pair ``${IMAGE_NAME1}`` and
@@ -170,7 +189,7 @@ whether the computed results make sense.
        matching_keypoints1 = keypoints1(matches(:,1));
        matching_keypoints2 = keypoints2(matches(:,2));
 
-6. **Import the features and matches into COLMAP:**
+7. **Import the features and matches into COLMAP:**
 
    Run the Python script ``scripts/colmap_import.py``:
 
@@ -200,7 +219,7 @@ whether the computed results make sense.
    use the database management tool. Alternatively, you can visualize the
    successfully verified image pairs by clicking ``Extras > Show match matrix``.
 
-7. **Run the sparse reconstruction:**
+8. **Run the sparse reconstruction:**
 
     1. From the command-line:
 

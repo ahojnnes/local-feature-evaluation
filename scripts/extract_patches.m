@@ -12,6 +12,11 @@ function patches = extract_patches(image, keypoints, patch_radius)
 %
 % Copyright 2017: Johannes L. Schoenberger <jsch at inf.ethz.ch>
 
+if size(keypoints, 1) == 0
+    patches = zeros(0, 2 * patch_radius + 1, 2 * patch_radius + 1);
+    return
+end
+
 [~, patches, ~] = vl_covdet(image, ...
                             'frames', vl_frame2oell(keypoints'), ...
                             'descriptor', 'patch', ...
