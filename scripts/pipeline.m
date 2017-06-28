@@ -85,7 +85,12 @@ parfor i = 1:num_images
 
     % Read the image for keypoint detection, patch extraction and
     % descriptor computation.
-    image = single(rgb2gray(imread(image_paths{i})));
+    image = imread(image_paths{i});
+    if ndims(image) == 2
+        image = single(image);
+    else
+        image = single(rgb2gray(image));
+    end
 
     % TODO: Replace this with your keypoint detector. The resultding
     %       keypoints matrix should have shape N x 4, where each row
