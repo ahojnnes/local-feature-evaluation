@@ -36,6 +36,7 @@ whether the computed results make sense.
        wget http://landmark.cs.cornell.edu/projects/1dsfm/images.Alamo.tar
        wget http://landmark.cs.cornell.edu/projects/1dsfm/images.Roman_Forum.tar
        wget http://vision.soic.indiana.edu/disco_files/ArtsQuad_dataset.tar
+       wget http://www.robots.ox.ac.uk/~vgg/data/oxbuildings/oxbuild_images.tgz
 
 2. **Extract the datasets:**
 
@@ -45,14 +46,17 @@ whether the computed results make sense.
        unzip South-Building.zip
        tar xvf images.Madrid_Metropolis.tar
        tar xvf images.Gendarmenmarkt.tar
+       mv home/wilsonkl/projects/SfM_Init/dataset_images/Gendarmenmarkt Gendarmenmarkt
+       rm -r home
        tar xvf images.Madrid_Metropolis.tar
        tar xvf images.Tower_of_London.tar
        tar xvf images.Alamo.tar
        tar xvf images.Roman_Forum.tar
        tar xvf ArtsQuad_dataset.tar
-
-       mv home/wilsonkl/projects/SfM_Init/dataset_images/Gendarmenmarkt Gendarmenmarkt
-       rm -r home
+       mkdir -p Oxford5k/images
+       cd Oxford5k/images
+       tar xfvz ../../oxbuild_images.tgz
+       cd ../..
 
 3. **Compute the keypoints:**
 
