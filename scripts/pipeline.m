@@ -6,7 +6,8 @@ clc;
 
 %% Set the pipeline parameters.
 
-% TODO: Change this to where your dataset is stored.
+% TODO: Change this to where your dataset is stored. This directory should
+%       contain an "images" folder and a "database.db" file.
 DATASET_PATH = '/Users/jsch/Desktop/Fountain';
 
 % TODO: Change this to where VLFeat is located.
