@@ -67,6 +67,9 @@ end
 
 %% Compute the keypoints and descriptors.
 
+delete(gcp('nocreate'));
+parpool(maxNumCompThreads());
+
 parfor i = 1:num_images
     fprintf('Computing features for %s [%d/%d]', ...
             image_names{i}, i, num_images);
