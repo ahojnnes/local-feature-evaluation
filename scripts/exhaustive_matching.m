@@ -70,3 +70,7 @@ for start_idx1 = 1:MATCH_BLOCK_SIZE:num_images
         fprintf(' in %.3fs\n', toc);
     end
 end
+
+% Clear the GPU memory.
+clear descriptors;
+clear matches;

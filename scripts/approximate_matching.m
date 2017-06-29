@@ -3,13 +3,18 @@
 command = [fullfile(COLMAP_PATH, 'src/tools/vocab_tree_retriever_float') ...
            ' --database_path ' DATABASE_PATH ...
            ' --descriptor_path ' DESCRIPTOR_PATH ...
-           ' --vocab_tree_path ' VOCAB_TREE_PATH ...
-           ' > ' fullfile(DATASET_PATH, 'retrieval.txt')];
+           ' --vocab_tree_path ' VOCAB_TREE_PATH];
 fprintf('Running %s\n', command);
 
 % Note that if this command fails to execute here, you can simply run the
 % command manually from the shell as well.
-system(command);
+[status, output] = system(command);
+assert(status == 0, 'Image retrieval failed');
+
+retrieval_result_path = fullfile(DATASET_PATH, 'retrieval.txt')
+fid = fopen(retrieval_result_path);
+fprintf(fid, output);
+fclose(fid);
 
 fid = fopen(fullfile(DATASET_PATH, 'retrieval.txt'));
 
@@ -67,6 +72,11 @@ while ischar(tline)
 
         % Match the descriptors for current query image.
         for retrieved_image_idx = retrieved_image_idxs
+            % Avoid self-matching.
+            if query_image_idx == retrieved_image_idx
+                continue;
+            end
+
             % Order the indices to avoid duplicate pairs.
             if query_image_idx < retrieved_image_idx
                 oidx1 = query_image_idx;
@@ -103,3 +113,7 @@ while ischar(tline)
 end
 
 fclose(fid);
+
+% Clear the GPU memory.
+clear descriptors;
+clear matches;

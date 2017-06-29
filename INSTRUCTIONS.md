@@ -141,24 +141,35 @@ whether the computed results make sense.
 
    As an input to image-based reconstruction, you need to compute 2D-to-2D
    feature correspondences between pairs of images. For the smaller datasets
-   (Fountain, Herzjesu, South Building, Madrid Metropolis, Gendarmenmarkt,
-   Tower of London), this must be done exhaustively for all image pairs. For
-   the larger datasets (Alamo, Roman Forum, Cornell), this must be done by
-   matching each image against its nearest neighbor image using the Bag-of-Words
-   image retrieval system of COLMAP.
+   (Fountain, Herzjesu, South Building, Madrid Metropolis, Gendarmenmarkt, Tower
+   of London), this must be done exhaustively for all image pairs. For the
+   larger datasets (Alamo, Roman Forum, Cornell), this must be done by matching
+   each image against its nearest neighbor image using the Bag-of-Words image
+   retrieval system of COLMAP. First, make sure that all keypoints and
+   descriptors exist. Then, run the corresponding section in the
+   ``scripts/pipeline.m`` script. It is strongly recommended that you run this
+   step on a machine with a CUDA-enabled GPU to speedup the matching process.
+   The benchmark pipeline script should run the matching fully automatically
+   end-to-end, but you can find additional details below.
 
      1. Exhaustive matching:
-        First, make sure that all keypoints and descriptors exist. Then,
-        run the corresponding section in the ``scripts/pipeline.m`` script.
-        It is strongly recommended that you run this step on a machine with
-        a CUDA-enabled GPU to speedup the matching process. Note that this
-        step can take a significant amount of time. For example, the largest
-        dataset for exhaustive matching (Madrid Metropolis) takes around
-        16 hours to match on a single NVIDIA Titan X GPU. It is therefore
+        Note that this step can take a significant amount of time. For example,
+        the largest dataset for exhaustive matching (Madrid Metropolis) takes
+        around 16 hours to match on a single NVIDIA Titan X GPU. It is therefore
         recommended to check whether everything works on one of the smaller
-        datasets before running the bigger datasets.
+        datasets before running the bigger datasets. The code for this
+        matching module is in ``scripts/exhaustive_matching.m``.
      2. Nearest neighbor matching:
+        First, you need to execute the image retrieval pipeline to find
+        the most similar image in the dataset for every image in the dataset:
 
+            ./colmap/build/src/tools/vocab_tree_retriever_float \
+                --descriptor_path Roman_Forum/descriptors \
+                --database_path Roman_Forum/database.db \
+                --vocab_tree_path Roman_Forum/vocab-tree.bin \
+                > Roman_Forum/retrieval.txt
+
+        Then, run the ``scripts/approximate_matching.m`` Matlab script.
 
    In both cases, the output will be written to the ``matches`` folder inside
    the dataset folder. The matches for image pair ``${IMAGE_NAME1}`` and
@@ -204,7 +215,7 @@ whether the computed results make sense.
    why there are no inlier matches in the database. To verify the matches,
    you must run the COLMAP ``matches_importer`` executable:
 
-       ./matches_importer \
+       ./colmap/build/src/exe/matches_importer \
            --database_path path/to/Fountain/database.db \
            --match_list_path path/to/Fountain/image-pairs.txt \
            --match_type pairs
@@ -223,7 +234,7 @@ whether the computed results make sense.
 
     1. From the command-line:
 
-           ./mapper \
+           ./colmap/build/src/exe/mapper \
                --database_path path/to/Fountain/database.db \
                --image_path path/to/Fountain/images \
                --export_path path/to/Fountain/sparse
