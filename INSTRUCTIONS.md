@@ -2,14 +2,13 @@ Instructions
 ============
 
 If you want to evaluate your own descriptors on our image-based reconstruction
-benchmark, please follow steps 1 and 2 below and then follow the steps in the
-Matlab script ``scripts/pipeline.m``. All locations that require changes by you
-(the user) are marked with ``TODO`` in this script. In addition, more detailed
-instructions for each individual step can be found below. It is recommended to
-first run the pipeline on a smaller dataset (e.g., Fountain or Herzjesu) to test
-whether the computed results make sense.
+benchmark, please follow steps 1-4 below to download the datasets and to
+run the benchmark. In addition, more detailed instructions for each individual
+step can be found at the end of this document. It is recommended to first run
+the pipeline on a smaller dataset (e.g., Fountain or Herzjesu) to test whether
+the computed results make sense.
 
-0. **Requirements:**
+1. **Requirements:**
 
    - Computer with CUDA-enabled GPU
    - Matlab R2016b or newer (for GPU feature matching)
@@ -23,7 +22,7 @@ whether the computed results make sense.
          cmake .. -DTEST_ENABLED=OFF
          make -j
 
-1. **Download the datasets:**
+2. **Download the datasets:**
 
        mkdir local-feature-evaluation
        cd local-feature-evaluation
@@ -40,7 +39,7 @@ whether the computed results make sense.
        wget http://vision.soic.indiana.edu/disco_files/ArtsQuad_dataset.tar
        wget http://www.robots.ox.ac.uk/~vgg/data/oxbuildings/oxbuild_images.tgz
 
-2. **Extract the datasets:**
+3. **Extract the datasets:**
 
        tar xvfz Databases.tar.gz
        unzip Strecha-Fountain.zip
@@ -60,7 +59,41 @@ whether the computed results make sense.
        tar xfvz ../../oxbuild_images.tgz
        cd ../..
 
-3. **Compute the keypoints:**
+4. **Run the evaluation:**
+
+   You can now run the evaluation scripts for every dataset by first running the
+   matching pipeline using the Matlab script ``scripts/matching_pipeline.m``.
+   All locations that require changes by you (the user) are marked with ``TODO``
+   in the Matlab script.
+
+    After finishing the matching pipeline, run the reconstruction using:
+
+        python scripts/reconstruction_pipeline.py \
+            --dataset_path path/to/Fountain \
+            --colmap_path path/to/colmap/build/src/exe
+
+    At the end of the reconstruction pipeline output, you should see all
+    relevant statistics of the benchmark. For example:
+
+        ==============================================================================
+        Raw statistics
+        ==============================================================================
+        {'num_images': 11, 'num_inlier_pairs': 55, 'num_inlier_matches': 120944}
+        {'num_reg_images': 11, 'num_sparse_points': 14472, 'num_observations': 68838, 'mean_track_length': 4.756633, 'num_observations_per_image': 6258.0, 'mean_reproj_error': 0.384562, 'num_dense_points': 298634}
+
+        ==============================================================================
+        Formatted statistics
+        ==============================================================================
+        Fountain | METHOD | 11 | 11 | 14472 | 68838 | 4.756633 | 6258.0 | 0.384562 | 298634 |  |  |  |  | 55 | 120944
+
+    Alternatively, you can find more details about each individual step in the
+    pipeline scripts above in the detailed instructions below.
+
+
+Detailed Instructions
+---------------------
+
+1. **Compute the keypoints:**
 
    The keypoints for each image ``${IMAGE_NAME}`` in the ``images`` folder are
    stored in a binary file ``${IMAGE_NAME}.bin`` in the ``keypoints`` folder.
@@ -99,7 +132,7 @@ whether the computed results make sense.
 
    where ``32`` is the radius of the extracted patch centered at the keypoint.
 
-4. **Compute the descriptors:**
+2. **Compute the descriptors:**
 
    For each image ``images/${IMAGE_NAME}`` and each keypoint in
    ``keypoints/${IMAGE_NAME}.bin``, you must save a corresponding descriptor
@@ -122,7 +155,7 @@ whether the computed results make sense.
        assert(size(keypoints, 1) == size(descriptors, 1));
        write_descriptors('Fountain/descriptors/0000.png.bin', descriptors);
 
-5. **Build the visual vocabulary:**
+3. **Build the visual vocabulary:**
 
    For matching the descriptors of the larger datasets, you need to build a
    visual vocabulary for your descriptor. This is done using the Oxford5k
@@ -141,7 +174,7 @@ whether the computed results make sense.
    have to change the ``kDescDim`` values in the ``vocab_tree_builder_float.cc``
    and ``vocab_tree_retriever_float.cc`` source files accordingly.
 
-6. **Match the descriptors:**
+4. **Match the descriptors:**
 
    As an input to image-based reconstruction, you need to compute 2D-to-2D
    feature correspondences between pairs of images. For the smaller datasets
@@ -151,10 +184,10 @@ whether the computed results make sense.
    each image against its nearest neighbor image using the Bag-of-Words image
    retrieval system of COLMAP. First, make sure that all keypoints and
    descriptors exist. Then, run the corresponding section in the
-   ``scripts/pipeline.m`` script. It is strongly recommended that you run this
-   step on a machine with a CUDA-enabled GPU to speedup the matching process.
-   The benchmark pipeline script should run the matching fully automatically
-   end-to-end, but you can find additional details below.
+   ``scripts/matching_pipeline.m`` script. It is strongly recommended that you
+   run this step on a machine with a CUDA-enabled GPU to speedup the matching
+   process. The benchmark pipeline script should run the matching fully
+   automatically end-to-end, but you can find additional details below.
 
      1. Exhaustive matching:
         Note that this step can take a significant amount of time. For example,
@@ -204,7 +237,7 @@ whether the computed results make sense.
        matching_keypoints1 = keypoints1(matches(:,1));
        matching_keypoints2 = keypoints2(matches(:,2));
 
-7. **Import the features and matches into COLMAP:**
+5. **Import the features and matches into COLMAP:**
 
    Run the Python script ``scripts/colmap_import.py``:
 
@@ -234,7 +267,7 @@ whether the computed results make sense.
    use the database management tool. Alternatively, you can visualize the
    successfully verified image pairs by clicking ``Extras > Show match matrix``.
 
-8. **Run the sparse reconstruction:**
+6. **Run the sparse reconstruction:**
 
     1. From the command-line:
 
@@ -248,7 +281,7 @@ whether the computed results make sense.
        ``path/to/Fountain/database.db`` database file and image path.
        Next, click ``Reconstruction > Start reconstruction``.
 
-8. **Run the dense reconstruction:**
+7. **Run the dense reconstruction:**
 
     Now, we run the dense reconstruction on the reconstructed sparse model
     with the most registered images. To find the largest sparse model,
@@ -276,6 +309,7 @@ whether the computed results make sense.
             --input_type photometric \
             --output_path path/to/Fountain/dense/0/fused.ply
 
-9. **Calculate the statistics**:
+8. **Extract the statistics**:
 
-   A fully automated evaluation script will be provided soon.
+    If you did not execute the evaluation script, you must now extract the
+    relevant statistics from the output manually.
