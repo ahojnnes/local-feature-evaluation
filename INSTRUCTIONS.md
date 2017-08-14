@@ -9,7 +9,7 @@ instructions for each individual step can be found below. It is recommended to
 first run the pipeline on a smaller dataset (e.g., Fountain or Herzjesu) to test
 whether the computed results make sense.
 
-0. Requirements
+0. **Requirements:**
 
    - Computer with CUDA-enabled GPU
    - Matlab R2016b or newer (for GPU feature matching)
@@ -24,6 +24,9 @@ whether the computed results make sense.
          make -j
 
 1. **Download the datasets:**
+
+       mkdir local-feature-evaluation
+       cd local-feature-evaluation
 
        wget http://cvg.ethz.ch/research/local-feature-evaluation/Databases.tar.gz
        wget http://cvg.ethz.ch/research/local-feature-evaluation/Strecha-Fountain.zip
@@ -91,7 +94,8 @@ whether the computed results make sense.
    The corresponding patches of each keypoint can be easily extracted using
    the provided ``scripts/extract_patches.m`` Matlab function:
 
-       patches = extract_patches('Fountain/images/0000.png', keypoints, 32);
+       image = single(rgb2gray(image));
+       patches = extract_patches(image, keypoints, 32);
 
    where ``32`` is the radius of the extracted patch centered at the keypoint.
 
@@ -243,3 +247,35 @@ whether the computed results make sense.
        Open the COLMAP GUI, click ``File > New project``, ``Open`` the
        ``path/to/Fountain/database.db`` database file and image path.
        Next, click ``Reconstruction > Start reconstruction``.
+
+8. **Run the dense reconstruction:**
+
+    Now, we run the dense reconstruction on the reconstructed sparse model
+    with the most registered images. To find the largest sparse model,
+    you can use the command:
+
+        ./colmap/build/src/exe/model_analyzer \
+            --path path/to/Fountain/sparse/0
+
+    Here, ``0`` is the folder containing the 0-th reconstructed sparse model.
+    Then, execute the following commands on the largest sparse model, as
+    determined previously (in this case it is the 0-th model):
+
+        mkdir -p path/to/Fountain/dense/0
+        ./colmap/build/src/exe/image_undistorter \
+            --image_path path/to/Fountain/images \
+            --input_path path/to/Fountain/sparse/0 \
+            --export_path path/to/Fountain/dense/0
+        ./colmap/build/src/exe/dense_stereo \
+            --workspace_path path/to/Fountain/dense/0 \
+            --DenseStereo.geom_consistency false \
+            --DenseStereo.max_image_size 1000
+        ./colmap/build/src/exe/dense_fuser \
+            --workspace_path path/to/Fountain/dense/0 \
+            --DenseFusion.min_num_pixels 5 \
+            --input_type photometric \
+            --output_path path/to/Fountain/dense/0/fused.ply
+
+9. **Calculate the statistics**:
+
+   A fully automated evaluation script will be provided soon.
