@@ -67,7 +67,7 @@ def import_matches(args):
         cursor.execute("INSERT INTO keypoints(image_id, rows, cols, data) "
                        "VALUES(?, ?, ?, ?);",
                        (image_id, keypoints.shape[0], keypoints.shape[1],
-                        memoryview(keypoints)))
+                        keypoints.tostring()))
         connection.commit()
 
     image_pairs = []
@@ -84,7 +84,7 @@ def import_matches(args):
         cursor.execute("INSERT INTO  matches(pair_id, rows, cols, data) "
                        "VALUES(?, ?, ?, ?);",
                        (image_pair_id, matches.shape[0], matches.shape[1],
-                        memoryview(matches)))
+                        matches.tostring()))
         connection.commit()
 
     with open(os.path.join(args.dataset_path, "image-pairs.txt"), "w") as fid:
