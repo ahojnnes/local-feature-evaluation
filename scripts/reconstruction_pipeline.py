@@ -5,6 +5,7 @@
 from __future__ import print_function, division
 
 import os
+import sys
 import glob
 import argparse
 import sqlite3
@@ -12,6 +13,9 @@ import subprocess
 import multiprocessing
 
 import numpy as np
+
+
+IS_PYTHON3 = sys.version_info[0] >= 3
 
 
 def parse_args():
@@ -64,10 +68,14 @@ def import_matches(args):
         descriptors = read_matrix(descriptor_path, np.float32)
         assert keypoints.shape[1] == 4
         assert keypoints.shape[0] == descriptors.shape[0]
+        if IS_PYTHON3:
+            keypoints_str = keypoints.tostring()
+        else:
+            keypoints_str = np.getbuffer(keypoints)
         cursor.execute("INSERT INTO keypoints(image_id, rows, cols, data) "
                        "VALUES(?, ?, ?, ?);",
                        (image_id, keypoints.shape[0], keypoints.shape[1],
-                        keypoints.tostring()))
+                        keypoints_str))
         connection.commit()
 
     image_pairs = []
@@ -81,10 +89,14 @@ def import_matches(args):
         image_pair_id = image_ids_to_pair_id(image_id1, image_id2)
         matches = read_matrix(match_path, np.uint32)
         assert matches.shape[1] == 2
+        if IS_PYTHON3:
+            matches_str = matches.tostring()
+        else:
+            matches_str = np.getbuffer(matches)
         cursor.execute("INSERT INTO  matches(pair_id, rows, cols, data) "
                        "VALUES(?, ?, ?, ?);",
                        (image_pair_id, matches.shape[0], matches.shape[1],
-                        matches.tostring()))
+                        matches_str))
         connection.commit()
 
     with open(os.path.join(args.dataset_path, "image-pairs.txt"), "w") as fid:
