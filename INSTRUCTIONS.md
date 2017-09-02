@@ -16,7 +16,7 @@ the computed results make sense.
    - [COLMAP](https://github.com/colmap/colmap):
 
          git clone https://github.com/colmap/colmap
-         cp path/to/local-feature-evaluation/* colmap/src/tools
+         cp path/to/local-feature-evaluation/colmap-tools/* colmap/src/tools
          mkdir colmap/build
          cd colmap/build
          cmake .. -DTEST_ENABLED=OFF
