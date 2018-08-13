@@ -14,7 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#include "base/feature.h"
+#include "base/database.h"
+#include "feature/types.h"
 #include "retrieval/visual_index.h"
 #include "util/logging.h"
 #include "util/misc.h"
@@ -81,7 +82,6 @@ void QueryImagesInVisualIndex(const std::string& descriptor_path,
 
   VisualIndexType::QueryOptions query_options;
   query_options.max_num_images = num_images;
-  query_options.max_num_verifications = 0;
 
   std::unordered_map<image_t, const Image*> image_id_to_image;
   image_id_to_image.reserve(images.size());

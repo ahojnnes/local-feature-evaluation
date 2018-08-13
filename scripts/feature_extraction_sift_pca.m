@@ -1,3 +1,8 @@
+% Note that for PCA-SIFT, the descriptor dimension changes and you have to set
+% kDescDim = 128 in the colmap-tools source code.
+
+load(fullfile(fileparts(mfilename('fullpath')), '../data/pca-sift.mat'));
+
 pool = gcp('nocreate');
 if isempty(pool)
     pool = parpool(maxNumCompThreads());
@@ -24,30 +29,21 @@ parfor i = 1:num_images
         image = single(rgb2gray(image));
     end
 
-    % TODO: Replace this with your keypoint detector. The resultding
-    %       keypoints matrix should have shape N x 4, where each row
-    %       contains the keypoint properties x, y, scale, orientation.
-    %       Note that only x and y are necessary for the reconstruction
-    %       benchmark while scale and orientation are only used for
-    %       extracting local patches around each detected keypoint.
-    %       If you implement your own keypoint detector and patch
-    %       extractor, then you can simply set scale and orientation to 0.
-    %       Here, we simply detect SIFT keypoints using VLFeat.
-    % keypoints = vl_sift(image)';
-    % write_keypoints(keypoint_paths{i}, keypoints);
+    % Read the pre-computed SIFT keypoints.
     keypoints = read_keypoints(keypoint_paths{i});
 
-    % Extract the local patches for all keypoints.
-    patches = extract_patches(image, keypoints, PATCH_RADIUS);
-
-    % TODO: Compute the descriptors for the extracted patches. Here, we
-    %       simply compute SIFT descriptors for all patches using VLFeat.
+    % Compute the descriptors for the detected keypoints.
     if size(keypoints, 1) == 0
-        descriptors = zeros(0, 128);
+        descriptors = zeros(0, 80);
     else
+        % Extract the local patches for all keypoints.
+        patches = extract_patches(image, keypoints, PATCH_RADIUS);
+        % Extract the descriptors from the patches.
         [~, descriptors] = vl_covdet(image, 'Frames', keypoints', ...
                                      'Descriptor', 'SIFT');
-        descriptors = descriptors';
+        % Perform PCA-SIFT projection and extract top 80 principal components.
+        descriptors = pca_sift_eigvecs * double(descriptors);
+        descriptors = single(data.descriptors(1:80,:))';
     end
 
     % Make sure that each keypoint has one descriptor.

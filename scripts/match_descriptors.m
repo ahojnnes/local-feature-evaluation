@@ -21,6 +21,7 @@ dists = pdist2(descriptors1, descriptors2, 'squaredeuclidean');
 idxs1 = gpuArray(single(1:size(descriptors1, 1)));
 [first_dists12, idxs12] = min(dists, [], 2);
 [~, idxs21] = min(dists, [], 1);
+idxs121 = idxs21(idxs12);
 
 % Find the second best matches.
 dists(sub2ind(size(dists), idxs1, idxs12')) = single(realmax('single'));
@@ -30,7 +31,7 @@ second_dists12 = min(dists, [], 2);
 dist_ratios12 = sqrt(first_dists12) ./ sqrt(second_dists12);
 
 % Enforce the ratio test constraint and mutual nearest neighbors.
-mask = (dist_ratios12' <= max_dist_ratio) & (idxs1 == idxs21(idxs12));
+mask = (dist_ratios12(:) <= max_dist_ratio) & (idxs1(:) == idxs121(:));
 idxs1 = idxs1(mask);
 idxs2 = idxs12(mask);
 

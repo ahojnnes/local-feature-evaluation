@@ -4,12 +4,12 @@ command = [fullfile(COLMAP_PATH, 'src/tools/vocab_tree_retriever_float') ...
            ' --database_path ' DATABASE_PATH ...
            ' --descriptor_path ' DESCRIPTOR_PATH ...
            ' --vocab_tree_path ' VOCAB_TREE_PATH];
-fprintf('Running %s\n', command);
+fprintf('Running command: %s\n', command);
 
 % Note that if this command fails to execute here, you can simply run the
 % command manually from the shell as well.
 [status, output] = system(command);
-assert(status == 0, 'Image retrieval failed');
+assert(status == 0, 'Image retrieval failed, run the above command manually.');
 
 retrieval_result_path = fullfile(DATASET_PATH, 'retrieval.txt')
 fid = fopen(retrieval_result_path);
@@ -41,7 +41,7 @@ while ischar(tline)
             retrieved_image_name = retrieval_results{2};
             retrieved_image_name = retrieved_image_name(13:end);
             retrieved_image_idxs = [retrieved_image_idxs, ...
-                                   image_name_to_idx(retrieved_image_name)];
+                                    image_name_to_idx(retrieved_image_name)];
             tline = fgets(fid);
         end
 

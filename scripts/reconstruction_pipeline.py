@@ -47,10 +47,20 @@ def import_matches(args):
     connection = sqlite3.connect(os.path.join(args.dataset_path, "database.db"))
     cursor = connection.cursor()
 
+    cursor.execute("SELECT name FROM sqlite_master "
+                   "WHERE type='table' AND name='inlier_matches';")
+    try:
+        inlier_matches_table_exists = bool(next(cursor)[0])
+    except StopIteration:
+        inlier_matches_table_exists = False
+
     cursor.execute("DELETE FROM keypoints;")
     cursor.execute("DELETE FROM descriptors;")
     cursor.execute("DELETE FROM matches;")
-    cursor.execute("DELETE FROM inlier_matches;")
+    if inlier_matches_table_exists:
+        cursor.execute("DELETE FROM inlier_matches;")
+    else:
+        cursor.execute("DELETE FROM two_view_geometries;")
     connection.commit()
 
     images = {}
@@ -79,6 +89,7 @@ def import_matches(args):
         connection.commit()
 
     image_pairs = []
+    image_pair_ids = set()
     for match_path in glob.glob(os.path.join(args.dataset_path,
                                              "matches/*---*.bin")):
         image_name1, image_name2 = \
@@ -87,6 +98,9 @@ def import_matches(args):
         print("Importing matches for", image_name1, "---", image_name2)
         image_id1, image_id2 = images[image_name1], images[image_name2]
         image_pair_id = image_ids_to_pair_id(image_id1, image_id2)
+        if image_pair_id in image_pair_ids:
+            continue
+        image_pair_ids.add(image_pair_id)
         matches = read_matrix(match_path, np.uint32)
         assert matches.shape[1] == 2
         if IS_PYTHON3:
@@ -106,7 +120,8 @@ def import_matches(args):
     cursor.close()
     connection.close()
 
-    subprocess.call([os.path.join(args.colmap_path, "matches_importer"),
+    subprocess.call([os.path.join(args.colmap_path, "colmap"),
+                     "matches_importer",
                      "--database_path",
                      os.path.join(args.dataset_path, "database.db"),
                      "--match_list_path",
@@ -119,10 +134,10 @@ def import_matches(args):
     cursor.execute("SELECT count(*) FROM images;")
     num_images = next(cursor)[0]
 
-    cursor.execute("SELECT count(*) FROM inlier_matches WHERE rows > 0;")
+    cursor.execute("SELECT count(*) FROM two_view_geometries WHERE rows > 0;")
     num_inlier_pairs = next(cursor)[0]
 
-    cursor.execute("SELECT sum(rows) FROM inlier_matches WHERE rows > 0;")
+    cursor.execute("SELECT sum(rows) FROM two_view_geometries WHERE rows > 0;")
     num_inlier_matches = next(cursor)[0]
 
     cursor.close()
@@ -146,7 +161,8 @@ def reconstruct(args):
 
     # Run the sparse reconstruction.
 
-    subprocess.call([os.path.join(args.colmap_path, "mapper"),
+    subprocess.call([os.path.join(args.colmap_path, "colmap"),
+                     "mapper",
                      "--database_path", database_path,
                      "--image_path", image_path,
                      "--export_path", sparse_path,
@@ -163,7 +179,8 @@ def reconstruct(args):
     largest_model = None
     largest_model_num_images = 0
     for model in models:
-        subprocess.call([os.path.join(args.colmap_path, "model_converter"),
+        subprocess.call([os.path.join(args.colmap_path, "colmap"),
+                         "model_converter",
                          "--input_path", os.path.join(sparse_path, model),
                          "--output_path", os.path.join(sparse_path, model),
                          "--output_type", "TXT"])
@@ -185,24 +202,27 @@ def reconstruct(args):
     if not os.path.exists(workspace_path):
         os.makedirs(workspace_path)
 
-    subprocess.call([os.path.join(args.colmap_path, "image_undistorter"),
+    subprocess.call([os.path.join(args.colmap_path, "colmap"),
+                     "image_undistorter",
                      "--image_path", image_path,
                      "--input_path", largest_model_path,
                      "--output_path", workspace_path,
                      "--max_image_size", "1200"])
 
-    subprocess.call([os.path.join(args.colmap_path, "dense_stereo"),
+    subprocess.call([os.path.join(args.colmap_path, "colmap"),
+                     "patch_match_stereo",
                      "--workspace_path", workspace_path,
-                     "--DenseStereo.geom_consistency", "false"])
+                     "--PatchMatchStereo.geom_consistency", "false"])
 
-    subprocess.call([os.path.join(args.colmap_path, "dense_fuser"),
+    subprocess.call([os.path.join(args.colmap_path, "colmap"),
+                     "stereo_fusion",
                      "--workspace_path", workspace_path,
                      "--input_type", "photometric",
                      "--output_path", os.path.join(workspace_path, "fused.ply"),
-                     "--DenseFusion.min_num_pixels", "5"])
+                     "--StereoFusion.min_num_pixels", "5"])
 
     stats = subprocess.check_output(
-        [os.path.join(args.colmap_path, "model_analyzer"),
+        [os.path.join(args.colmap_path, "colmap"), "model_analyzer",
          "--path", largest_model_path])
 
     stats = stats.decode().split("\n")
@@ -254,7 +274,7 @@ def main():
     print(78 * "=")
     print("Formatted statistics")
     print(78 * "=")
-    print(" | ".join(
+    print("| " + " | ".join(
             map(str, [os.path.basename(args.dataset_path),
                       "METHOD",
                       matching_stats["num_images"],
@@ -270,7 +290,7 @@ def main():
                       "",
                       "",
                       matching_stats["num_inlier_pairs"],
-                      matching_stats["num_inlier_matches"]])))
+                      matching_stats["num_inlier_matches"]])) + " |")
 
 
 if __name__ == "__main__":

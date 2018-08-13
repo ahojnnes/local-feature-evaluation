@@ -15,17 +15,20 @@ the computed results make sense.
    - [VLFeat](http://www.vlfeat.org/) toolbox for Matlab
    - [COLMAP](https://github.com/colmap/colmap):
 
+         git clone https://github.com/ahojnnes/local-feature-evaluation.git
          git clone https://github.com/colmap/colmap
-         cp path/to/local-feature-evaluation/colmap-tools/* colmap/src/tools
-         mkdir colmap/build
-         cd colmap/build
-         cmake .. -DTEST_ENABLED=OFF
-         make -j
+         cd colmap
+         git checkout 58d966c
+         cp ../local-feature-evaluation/colmap-tools/* src/tools
+         mkdir build
+         cd build
+         cmake .. -DTESTS_ENABLED=OFF
+         make
 
 2. **Download the datasets:**
 
-       mkdir local-feature-evaluation
-       cd local-feature-evaluation
+       mkdir datasets
+       cd datasets
 
        wget http://cvg.ethz.ch/research/local-feature-evaluation/Databases.tar.gz
        wget http://cvg.ethz.ch/research/local-feature-evaluation/Strecha-Fountain.zip
@@ -47,7 +50,7 @@ the computed results make sense.
        unzip South-Building.zip
        tar xvf images.Madrid_Metropolis.tar
        tar xvf images.Gendarmenmarkt.tar
-       mv home/wilsonkl/projects/SfM_Init/dataset_images/Gendarmenmarkt Gendarmenmarkt
+       mv home/wilsonkl/projects/SfM_Init/dataset_images/Gendarmenmarkt/images Gendarmenmarkt/images
        rm -r home
        tar xvf images.Madrid_Metropolis.tar
        tar xvf images.Tower_of_London.tar
@@ -59,35 +62,43 @@ the computed results make sense.
        tar xfvz ../../oxbuild_images.tgz
        cd ../..
 
-4. **Run the evaluation:**
+4. **Download and extract keypoints:**
+
+   If you evaluate just a feature descriptor without a feature detection
+   component, you should use the provided SIFT keypoints:
+
+       wget http://cvg.ethz.ch/research/local-feature-evaluation/Keypoints.tar.gz
+       tar xvfz Keypoints.tar.gz
+
+5. **Run the evaluation:**
 
    You can now run the evaluation scripts for every dataset by first running the
    matching pipeline using the Matlab script ``scripts/matching_pipeline.m``.
    All locations that require changes by you (the user) are marked with ``TODO``
    in the Matlab script.
 
-    After finishing the matching pipeline, run the reconstruction using:
+   After finishing the matching pipeline, run the reconstruction using:
 
-        python scripts/reconstruction_pipeline.py \
-            --dataset_path path/to/Fountain \
-            --colmap_path path/to/colmap/build/src/exe
+       python scripts/reconstruction_pipeline.py \
+           --dataset_path datasets/Fountain \
+           --colmap_path colmap/build/src/exe
 
-    At the end of the reconstruction pipeline output, you should see all
-    relevant statistics of the benchmark. For example:
+   At the end of the reconstruction pipeline output, you should see all
+   relevant statistics of the benchmark. For example:
 
-        ==============================================================================
-        Raw statistics
-        ==============================================================================
-        {'num_images': 11, 'num_inlier_pairs': 55, 'num_inlier_matches': 120944}
-        {'num_reg_images': 11, 'num_sparse_points': 14472, 'num_observations': 68838, 'mean_track_length': 4.756633, 'num_observations_per_image': 6258.0, 'mean_reproj_error': 0.384562, 'num_dense_points': 298634}
+       ==============================================================================
+       Raw statistics
+       ==============================================================================
+       {'num_images': 11, 'num_inlier_pairs': 55, 'num_inlier_matches': 120944}
+       {'num_reg_images': 11, 'num_sparse_points': 14472, 'num_observations': 68838, 'mean_track_length': 4.756633, 'num_observations_per_image': 6258.0, 'mean_reproj_error': 0.384562, 'num_dense_points': 298634}
 
-        ==============================================================================
-        Formatted statistics
-        ==============================================================================
-        Fountain | METHOD | 11 | 11 | 14472 | 68838 | 4.756633 | 6258.0 | 0.384562 | 298634 |  |  |  |  | 55 | 120944
+       ==============================================================================
+       Formatted statistics
+       ==============================================================================
+       | Fountain | METHOD | 11 | 11 | 14472 | 68838 | 4.756633 | 6258.0 | 0.384562 | 298634 |  |  |  |  | 55 | 120944 |
 
-    Alternatively, you can find more details about each individual step in the
-    pipeline scripts above in the detailed instructions below.
+   Alternatively, you can find more details about each individual step in the
+   pipeline scripts above in the detailed instructions below.
 
 
 Detailed Instructions
@@ -271,7 +282,7 @@ Detailed Instructions
 
     1. From the command-line:
 
-           ./colmap/build/src/exe/mapper \
+           ./colmap/build/src/exe/colmap mapper \
                --database_path path/to/Fountain/database.db \
                --image_path path/to/Fountain/images \
                --export_path path/to/Fountain/sparse
@@ -295,17 +306,17 @@ Detailed Instructions
     determined previously (in this case it is the 0-th model):
 
         mkdir -p path/to/Fountain/dense/0
-        ./colmap/build/src/exe/image_undistorter \
+        ./colmap/build/src/exe/colmap image_undistorter \
             --image_path path/to/Fountain/images \
             --input_path path/to/Fountain/sparse/0 \
-            --export_path path/to/Fountain/dense/0
-        ./colmap/build/src/exe/dense_stereo \
+            --export_path path/to/Fountain/dense/0 \
+            --max_image_size 1200
+        ./colmap/build/src/exe/colmap patch_match_stereo \
             --workspace_path path/to/Fountain/dense/0 \
-            --DenseStereo.geom_consistency false \
-            --DenseStereo.max_image_size 1000
-        ./colmap/build/src/exe/dense_fuser \
+            --PatchMatchStereo.geom_consistency false
+        ./colmap/build/src/exe/colmap stereo_fusion \
             --workspace_path path/to/Fountain/dense/0 \
-            --DenseFusion.min_num_pixels 5 \
+            --StereoFusion.min_num_pixels 5 \
             --input_type photometric \
             --output_path path/to/Fountain/dense/0/fused.ply
 
