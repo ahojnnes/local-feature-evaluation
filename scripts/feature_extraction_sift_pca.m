@@ -36,8 +36,6 @@ parfor i = 1:num_images
     if size(keypoints, 1) == 0
         descriptors = zeros(0, 80);
     else
-        % Extract the local patches for all keypoints.
-        patches = extract_patches(image, keypoints, PATCH_RADIUS);
         % Extract the descriptors from the patches.
         [~, descriptors] = vl_covdet(image, 'Frames', keypoints', ...
                                      'Descriptor', 'SIFT');
