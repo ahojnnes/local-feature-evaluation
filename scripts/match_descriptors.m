@@ -14,6 +14,11 @@ function matches = match_descriptors(descriptors1, descriptors2, max_dist_ratio)
 %
 % Copyright 2017: Johannes L. Schönberger <jsch at inf.ethz.ch>
 
+if size(descriptors1, 1) == 0 || size(descriptors2, 1) == 0
+    matches = zeros(0, 2, 'uint32');
+    return;
+end
+
 % Exhaustively compute distances between all descriptors.
 dists = pdist2(descriptors1, descriptors2, 'squaredeuclidean');
 
