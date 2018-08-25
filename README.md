@@ -22,10 +22,10 @@ Benchmark Results
 This list is updated with the latest benchmark results. Note that the results
 differ from the original paper, since they were updated with the latest COLMAP
 version. Numbers of some of the features are still missing for the latest COLMAP
-version and will be added shortly after recomputing them. If you want to submit
-your own results, please open a new issue or pull request in this repository.
-Note that the below table extends to the right and alternatively can be viewed
-in a code or text editor.
+version and will be added shortly after recomputing them (marked with ***). If
+you want to submit your own results, please open a new issue or pull request in
+this repository. Note that the below table extends to the right and
+alternatively can be viewed in a code or text editor.
 
 **Metrics:**
 
