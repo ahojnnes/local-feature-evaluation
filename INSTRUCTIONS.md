@@ -30,10 +30,10 @@ the computed results make sense.
        mkdir datasets
        cd datasets
 
-       wget http://cvg.ethz.ch/research/local-feature-evaluation/Databases.tar.gz
-       wget http://cvg.ethz.ch/research/local-feature-evaluation/Strecha-Fountain.zip
-       wget http://cvg.ethz.ch/research/local-feature-evaluation/Strecha-Herzjesu.zip
-       wget http://cvg.ethz.ch/research/local-feature-evaluation/South-Building.zip
+       wget https://cvg-data.inf.ethz.ch/local-feature-evaluation-schoenberger2017/Databases.tar.gz
+       wget https://cvg-data.inf.ethz.ch/local-feature-evaluation-schoenberger2017/Strecha-Fountain.zip
+       wget https://cvg-data.inf.ethz.ch/local-feature-evaluation-schoenberger2017/Strecha-Herzjesu.zip
+       wget https://cvg-data.inf.ethz.ch/local-feature-evaluation-schoenberger2017/South-Building.zip
        wget http://landmark.cs.cornell.edu/projects/1dsfm/images.Madrid_Metropolis.tar
        wget http://landmark.cs.cornell.edu/projects/1dsfm/images.Gendarmenmarkt.tar
        wget http://landmark.cs.cornell.edu/projects/1dsfm/images.Tower_of_London.tar
@@ -67,7 +67,7 @@ the computed results make sense.
    If you evaluate just a feature descriptor without a feature detection
    component, you should use the provided SIFT keypoints:
 
-       wget http://cvg.ethz.ch/research/local-feature-evaluation/Keypoints.tar.gz
+       wget https://cvg-data.inf.ethz.ch/local-feature-evaluation-schoenberger2017/Keypoints.tar.gz
        tar xvfz Keypoints.tar.gz
 
 5. **Run the evaluation:**
@@ -111,7 +111,7 @@ Detailed Instructions
 
      1. *Using the provided SIFT keypoints:*
 
-            wget http://cvg.ethz.ch/research/local-feature-evaluation/Keypoints.tar.gz
+            wget https://cvg-data.inf.ethz.ch/local-feature-evaluation-schoenberger2017/Keypoints.tar.gz
             tar xvfz Keypoints.tar.gz
 
      2. *Using your own keypoints:*
